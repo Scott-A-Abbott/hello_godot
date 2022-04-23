@@ -102,7 +102,7 @@ impl Ecs {
 
 //Owner as a Resource
 
-#[derive(Component, Deref, DerefMut)]
+#[derive(Deref, DerefMut)]
 pub struct EcsNode(Ref<Node>);
 
 //STATE
