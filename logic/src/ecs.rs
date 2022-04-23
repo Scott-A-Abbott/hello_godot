@@ -100,12 +100,12 @@ impl Ecs {
     }
 }
 
-//Owner as a Resource
+// OWNER AS RESOURCE
 
 #[derive(Deref, DerefMut)]
 pub struct EcsNode(Ref<Node>);
 
-//STATE
+// STATE
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub enum ProcessState {
@@ -113,7 +113,7 @@ pub enum ProcessState {
     Physics,
 }
 
-//SYSTEMS
+// SYSTEMS
 
 pub fn exit_on_escape(ecs_node: ResMut<EcsNode>) {
     let input = gd::Input::godot_singleton();
