@@ -25,6 +25,11 @@ impl Ecs {
     pub fn _ready(&self, _owner: TRef<Node>) {
         self.update();
     }
+    
+    #[export]
+    pub fn _process(&self, _owner: TRef<Node>, _delta: f64) {
+        self.update();
+    }
 }
 */
 
