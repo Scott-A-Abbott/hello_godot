@@ -1,0 +1,12 @@
+[package]
+name = "logic"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+bevy = { version = "0.7", default-features = false }
+gdnative = "0.10"
+iyes_loopless = "0.4"
