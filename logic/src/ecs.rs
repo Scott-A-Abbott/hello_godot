@@ -126,7 +126,7 @@ pub struct Message(String);
 // SYSTEMS
 
 pub fn spawn_message(mut commands: Commands) {
-    commands.spawn().insert(Message("Hello, Bevy".to_string()));
+    commands.spawn().insert(Message("Hello, Bevy!".to_string()));
 }
 
 pub fn say_message(mut commands: Commands, query: Query<(Entity, &Message)>) {
