@@ -1,4 +1,4 @@
-use bevy::{ecs::system::CommandQueue, prelude::*};
+use bevy::prelude::*;
 use gdnative::prelude::{self as gd, *};
 use iyes_loopless::prelude::*;
 
@@ -25,7 +25,7 @@ impl Ecs {
     pub fn _ready(&self, _owner: TRef<Node>) {
         self.update();
     }
-    
+
     #[export]
     pub fn _process(&self, _owner: TRef<Node>, _delta: f64) {
         self.update();
@@ -41,29 +41,14 @@ impl Default for Ecs {
     /// This replaces bevy's CorePlugin, because the CorePlugin requires reflecting types.
     fn default() -> Self {
         let mut app = App::empty();
+        //Inserts the default thread pools into world
         DefaultTaskPoolOptions::default().create_default_pools(&mut app.world);
 
+        //CoreStages include: First, PreUpdate, Update, PostUpdate, Last
         app.add_default_stages()
-            .insert_resource(Time::default())
-            .add_system_to_stage(
-                CoreStage::First,
-                (|mut time: ResMut<Time>| time.update()).exclusive_system(),
-            )
             .add_system_to_stage(CoreStage::Last, World::clear_trackers.exclusive_system());
 
         Self(app)
-    }
-}
-
-impl Ecs {
-    /// Helper for running commands outside the ecs world
-    pub fn run_commands(&mut self, command_fn: impl FnOnce(Commands)) {
-        let mut queue = CommandQueue::default();
-        let world = &mut self.world;
-        let commands = Commands::new(&mut queue, world);
-
-        command_fn(commands);
-        queue.apply(world);
     }
 }
 
@@ -74,6 +59,8 @@ impl Ecs {
 
         ecs.add_loopless_state(ProcessState::Idle)
             .insert_resource(EcsNode(owner.claim()))
+            .insert_resource(IdleDelta::default())
+            .insert_resource(PhysicsDelta::default())
             .add_startup_system(hello_bevy)
             .add_system(exit_on_escape.run_in_state(ProcessState::Idle));
 
@@ -86,24 +73,32 @@ impl Ecs {
     }
 
     #[export]
-    pub fn _process(&mut self, _owner: &gd::Node, _delta: f64) {
-        self.run_commands(|mut commands| commands.insert_resource(NextState(ProcessState::Idle)));
+    pub fn _process(&mut self, _owner: &gd::Node, delta: f64) {
+        self.world.insert_resource(NextState(ProcessState::Idle));
+        self.world.insert_resource(IdleDelta(delta));
+
         self.update();
     }
 
     #[export]
-    pub fn _physics_process(&mut self, _owner: &gd::Node, _delta: f64) {
-        self.run_commands(|mut commands| {
-            commands.insert_resource(NextState(ProcessState::Physics))
-        });
+    pub fn _physics_process(&mut self, _owner: &gd::Node, delta: f64) {
+        self.world.insert_resource(NextState(ProcessState::Physics));
+        self.world.insert_resource(PhysicsDelta(delta));
+
         self.update();
     }
 }
 
-// OWNER AS RESOURCE
+// RESOURCES
 
 #[derive(Deref, DerefMut)]
 pub struct EcsNode(Ref<Node>);
+
+#[derive(Deref, DerefMut, Default)]
+pub struct IdleDelta(f64);
+
+#[derive(Deref, DerefMut, Default)]
+pub struct PhysicsDelta(f64);
 
 // STATE
 
