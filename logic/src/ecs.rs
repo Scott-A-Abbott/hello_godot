@@ -31,6 +31,10 @@ impl Ecs {
         self.update();
     }
 }
+
+pub fn hello_bevy() {
+    println!("Hello, Bevy!");
+}
 */
 
 #[derive(NativeClass, Deref, DerefMut)]
@@ -61,8 +65,14 @@ impl Ecs {
             .insert_resource(EcsNode(owner.claim()))
             .insert_resource(IdleDelta::default())
             .insert_resource(PhysicsDelta::default())
-            .add_startup_system(hello_bevy)
-            .add_system(exit_on_escape.run_in_state(ProcessState::Idle));
+            .add_startup_system(spawn_message)
+            .add_system_set(
+                ConditionSet::new()
+                    .run_in_state(ProcessState::Idle)
+                    .with_system(say_message)
+                    .with_system(exit_on_escape)
+                    .into(),
+            );
 
         ecs
     }
@@ -108,7 +118,24 @@ pub enum ProcessState {
     Physics,
 }
 
+// COMPONENTS
+
+#[derive(Component)]
+pub struct Message(String);
+
 // SYSTEMS
+
+pub fn spawn_message(mut commands: Commands) {
+    commands.spawn().insert(Message("Hello, Bevy".to_string()));
+}
+
+pub fn say_message(mut commands: Commands, query: Query<(Entity, &Message)>) {
+    query.for_each(|(entity, Message(ref msg))| {
+        println!("{}", msg);
+
+        commands.entity(entity).despawn();
+    });
+}
 
 pub fn exit_on_escape(ecs_node: ResMut<EcsNode>) {
     let input = gd::Input::godot_singleton();
@@ -122,8 +149,4 @@ pub fn exit_on_escape(ecs_node: ResMut<EcsNode>) {
 
         tree.quit(-1);
     }
-}
-
-pub fn hello_bevy() {
-    println!("Hello, Bevy!");
 }
